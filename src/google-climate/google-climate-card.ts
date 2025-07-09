@@ -14,6 +14,32 @@ import {
 import { fireEvent } from "custom-card-helpers";
 import { applyRippleEffect } from "../utils";
 
+// Set states where card would show climate device as on
+const ACTIVE_STATES = new Set([
+  "on",
+  "auto",
+  "heat",
+  "cool",
+  "heat_cool",
+  "fan_only",
+  "fan",
+  "dry",
+  "eco",
+  "idle"
+]);
+
+// Recognise common derivatives and normalize
+function isActiveState(state: string): boolean {
+  if (!state) return false;
+  const normalized = state.toLowerCase().replace(/-/g, "_");
+  return (
+    ACTIVE_STATES.has(normalized) ||
+    normalized.startsWith("fan") ||
+    normalized.startsWith("eco") ||
+    normalized.startsWith("dry")
+  );
+}
+
 @customElement("google-climate-card")
 export class GoogleClimateCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -185,11 +211,7 @@ export class GoogleClimateCard extends LitElement {
 
     const stateDisplay = mapStateDisplay(stateObj, "thermometer", isOffline);
     const theme = this.hass?.themes?.darkMode ? "dark" : "light";
-    const isOn =
-      stateObj.state === "on" ||
-      stateObj.state === "auto" ||
-      stateObj.state === "heat" ||
-      stateObj.state === "cool";
+    const isOn = isActiveState(stateObj.state);
 
     this.setColorCard(this._config.use_material_color, theme, isOffline, isOn);
 
